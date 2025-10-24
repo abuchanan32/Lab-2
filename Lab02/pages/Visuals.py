@@ -22,16 +22,23 @@ if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
         4: "Friday", 5: "Saturday", 6: "Sunday"
     }
     df.rename(columns=lambda x: day_map.get(x, day_map.get(str(x), x)), inplace=True)
+    
+json_paths = ['data.json', 'Lab02/data.json', '../data.json']
+json_loaded = False
 
-# ---- CHANGED: data.json loading logic (path unchanged) ----
-try:
-    with open('Lab02/data.json', 'r') as file:
-        json_data = json.load(file)
-    st.success("JSON data loaded successfully!")
-    st.write(f"JSON keys: {list(json_data.keys())}")
-    st.write(f"Has 'data_points'? {'data_points' in json_data}")
-except Exception as e:
-    st.error(f"Error loading JSON: {str(e)}")
+for path in json_paths:
+    try:
+        if os.path.exists(path):
+            with open(path, 'r') as file:
+                json_data = json.load(file)
+            st.success(f"JSON data loaded successfully from: {path}")
+            json_loaded = True
+            break
+    except Exception as e:
+        continue
+
+if not json_loaded:
+    st.error("Could not find data.json in any expected location")
 # -----------------------------------------------------------
 
 st.divider()
