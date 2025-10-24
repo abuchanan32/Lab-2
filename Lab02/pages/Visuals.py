@@ -66,22 +66,27 @@ if not df.empty:
 else:
     st.info("No data available for visualization.")
 
-# Graph 2 (super simple)
+# Graph 2
 st.divider()
 st.subheader("Graph 2: TikTok Hours vs Productivity (Dynamic)")
 
 if json_data and "productivity_data" in json_data and not df.empty:
     prod = json_data["productivity_data"]
 
-    st.line_chart(pd.DataFrame({
+    # Create and display chart
+    df_prod = pd.DataFrame({
         "Hours Range": list(prod.keys()),
         "Productivity Score": list(prod.values())
-    }), x="Hours Range", y="Productivity Score")
+    })
+    st.line_chart(df_prod, x="Hours Range", y="Productivity Score")
 
-    avg = df.select_dtypes(float).melt()["value"].mean()
+    # Calculate user average hours/day
+    avg = df.select_dtypes(include="number").melt()["value"].mean()
+
+    # Determine category and score
     bins = [0,1,2,3,4,5,6,float("inf")]
     labels = ["0-1","1-2","2-3","3-4","4-5","5-6","6+"]
-    cat = pd.cut([avg], bins=bins, labels=labels)[0]
+    cat = pd.cut([avg], bins=bins, labels=labels, right=False)[0]
     score = prod.get(str(cat), "N/A")
 
     st.info(f"Based on your average of {avg:.2f} hours/day, your estimated productivity score is {score}/100.")
