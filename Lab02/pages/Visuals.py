@@ -9,9 +9,9 @@ st.set_page_config(
 st.title("Data Visualizations")
 st.write("This page displays graphs based on the collected data.")
 
-#Load Data
+# Load Data
 df = pd.DataFrame()
-json_data = {}
+json_data = None
 
 if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
     df = pd.read_csv("data.csv")
@@ -22,23 +22,22 @@ if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
         4: "Friday", 5: "Saturday", 6: "Sunday"
     }
     df.rename(columns=lambda x: day_map.get(x, day_map.get(str(x), x)), inplace=True)
-    
-json_paths = ['data.json', 'Lab02/data.json', '../data.json']
-json_loaded = False
 
+# --- Simplified JSON loading ---
+json_paths = ['Lab02/data.json', 'data.json', '../data.json']
 for path in json_paths:
     try:
-        if os.path.exists(path):
-            with open(path, 'r') as file:
-                json_data = json.load(file)
-            st.success(f"JSON data loaded successfully from: {path}")
-            json_loaded = True
-            break
+        with open(path, 'r') as file:
+            json_data = json.load(file)
+        st.success(f"JSON data loaded successfully from: {path}")
+        st.write(f"JSON keys: {list(json_data.keys())}")
+        st.write(f"Has 'data_points'? {'data_points' in json_data}")
+        break
     except Exception as e:
-        continue
+        st.error(f"Error loading JSON from {path}: {str(e)}")
 
-if not json_loaded:
-    st.error("Could not find data.json in any expected location")
+if json_data is None:
+    st.error("Could not load any valid JSON file.")
 # -----------------------------------------------------------
 
 st.divider()
@@ -48,47 +47,39 @@ if not df.empty:
 else:
     st.info("No CSV data to display.")
 
-#Graph 1
+# Graph 1
 st.divider()
 st.subheader("Graph 1: TikTok Hours Distribution (Static)")
 if not df.empty:
     day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    
-    # Calculates average hours each day
-    daily_avg = df.mean()  # Series with index = days
-    
+
+    daily_avg = df.mean()
     daily_avg = daily_avg.reindex([d for d in day_order if d in daily_avg.index])
-    
+
     daily_avg_df = pd.DataFrame({
         'Day': pd.Categorical(daily_avg.index, categories=day_order, ordered=True),
         'Average Hours': daily_avg.values
     })
-    
-    # Sorts by day to ensure correct order of days
+
     daily_avg_df = daily_avg_df.sort_values('Day')
-    
-    # Streamlit bar chart with x and y axes
     st.bar_chart(daily_avg_df, x='Day', y='Average Hours')
 else:
     st.info("No data available for visualization.")
-    
+
 # Graph 2
 st.divider()
 st.subheader("Graph 2: TikTok Hours vs Productivity (Dynamic)")
-if json_data.get("productivity_data") and not df.empty:
+if json_data and json_data.get("productivity_data") and not df.empty:
     hours_categories = list(json_data["productivity_data"].keys())
     productivity_scores = list(json_data["productivity_data"].values())
-    
-    #Creates properly labeled DataFrame for line chart
+
     productivity_df = pd.DataFrame({
         'Hours Range': hours_categories,
         'Productivity Score': productivity_scores
     })
-    
-    #Streamlit line chart with explicit x and y axes
+
     st.line_chart(productivity_df, x='Hours Range', y='Productivity Score')
-    
-    # Calculates user average 
+
     melted = df.melt(value_vars=df.columns)
     if not melted.empty:
         user_avg = melted["value"].mean()
@@ -111,45 +102,29 @@ if not df.empty:
     df_reset["Week"] = df_reset.index + 1
     weeks = ["All Weeks"] + df_reset["Week"].tolist()
     selected_week = st.selectbox("Select week to view:", options=weeks)
-    
-    # Defines day order for consistent display
+
     day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    
+
     if selected_week == "All Weeks":
         weekly_avg = df_reset.drop("Week", axis=1).mean()
-        
-        #Reindex to ensure correct day order
         weekly_avg = weekly_avg.reindex([d for d in day_order if d in weekly_avg.index])
-        
-        # Create properly labeled DataFrame with categorical day order
         weekly_avg_df = pd.DataFrame({
             'Day': pd.Categorical(weekly_avg.index, categories=day_order, ordered=True),
             'Average Hours': weekly_avg.values
         })
-        
-        #Sort by day
         weekly_avg_df = weekly_avg_df.sort_values('Day')
-        
         st.bar_chart(weekly_avg_df, x='Day', y='Average Hours')
     else:
         week_data = df_reset[df_reset["Week"] == selected_week].drop("Week", axis=1)
         if not week_data.empty:
-            #Transposes and create proper DataFrame
             week_data_transposed = week_data.T
             week_data_transposed.columns = ['Hours']
-            
-            #Reindex to ensure correct day order
             week_data_transposed = week_data_transposed.reindex([d for d in day_order if d in week_data_transposed.index])
-            
-            #Creates properly labeled DataFrame with categorical day order
             week_display_df = pd.DataFrame({
                 'Day': pd.Categorical(week_data_transposed.index, categories=day_order, ordered=True),
                 'Hours': week_data_transposed['Hours'].values
             })
-            
-            #Sorts by day 
             week_display_df = week_display_df.sort_values('Day')
-            
             st.bar_chart(week_display_df, x='Day', y='Hours')
         else:
             st.info("No data available for this week.")
