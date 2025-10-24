@@ -70,7 +70,7 @@ else:
 st.divider()
 st.subheader("Graph 2: TikTok Hours vs Productivity (Dynamic)")
 
-if json_data and "productivity_data" in json_data and not df.empty:
+if json_data and "productivity_data" in json_data:
     prod = json_data["productivity_data"]
 
     # Create and display chart
@@ -80,16 +80,19 @@ if json_data and "productivity_data" in json_data and not df.empty:
     })
     st.line_chart(df_prod, x="Hours Range", y="Productivity Score")
 
-    # Calculate user average hours/day
-    avg = df.select_dtypes(include="number").melt()["value"].mean()
+    # Calculate user average hours/day (only if CSV data exists)
+    if not df.empty:
+        avg = df.select_dtypes(include="number").melt()["value"].mean()
 
-    # Determine category and score
-    bins = [0,1,2,3,4,5,6,float("inf")]
-    labels = ["0-1","1-2","2-3","3-4","4-5","5-6","6+"]
-    cat = pd.cut([avg], bins=bins, labels=labels, right=False)[0]
-    score = prod.get(str(cat), "N/A")
+        # Determine category and score
+        bins = [0,1,2,3,4,5,6,float("inf")]
+        labels = ["0-1","1-2","2-3","3-4","4-5","5-6","6+"]
+        cat = pd.cut([avg], bins=bins, labels=labels, right=False)[0]
+        score = prod.get(str(cat), "N/A")
 
-    st.info(f"Based on your average of {avg:.2f} hours/day, your estimated productivity score is {score}/100.")
+        st.info(f"Based on your average of {avg:.2f} hours/day, your estimated productivity score is {score}/100.")
+    else:
+        st.info("Submit survey data to see your personalized productivity score!")
 else:
     st.info("No productivity data available for visualization.")
 
