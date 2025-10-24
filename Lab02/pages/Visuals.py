@@ -22,8 +22,8 @@ if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
     }
     df.rename(columns=lambda x: day_map.get(x, day_map.get(str(x), x)), inplace=True)
         
-if os.path.exists("data.json") and os.path.getsize("data.json") > 0:
-    with open("data.json", "r") as f:
+if os.path.exists(r"Lab02/data.json") and os.path.getsize(r"Lab02/data.json") > 0:
+    with open(r"Lab02/data.json", "r") as f:
         json_data = json.load(f)
 
 st.divider()
