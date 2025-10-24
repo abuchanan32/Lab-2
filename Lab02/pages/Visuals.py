@@ -73,12 +73,21 @@ st.subheader("Graph 2: TikTok Hours vs Productivity (Dynamic)")
 if json_data and "productivity_data" in json_data:
     prod = json_data["productivity_data"]
 
-    # Create and display chart
+    # Create properly ordered DataFrame for the chart
+    hours_order = ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6+"]
+    
     df_prod = pd.DataFrame({
-        "Hours Range": list(prod.keys()),
-        "Productivity Score": list(prod.values())
+        "Hours Range": pd.Categorical([h for h in hours_order if h in prod], 
+                                     categories=hours_order, 
+                                     ordered=True),
+        "Productivity Score": [prod[h] for h in hours_order if h in prod]
     })
-    st.line_chart(df_prod, x="Hours Range", y="Productivity Score")
+    
+    # Sort by the categorical order
+    df_prod = df_prod.sort_values('Hours Range')
+    
+    # Display the chart with proper indexing
+    st.line_chart(df_prod.set_index('Hours Range'))
 
     # Calculate user average hours/day (only if CSV data exists)
     if not df.empty:
