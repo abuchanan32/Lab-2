@@ -12,6 +12,7 @@ st.write("This page displays graphs based on the collected data.")
 #Load Data
 df = pd.DataFrame()
 json_data = {}
+
 if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
     df = pd.read_csv("data.csv")
     day_map = {
@@ -21,10 +22,17 @@ if os.path.exists("data.csv") and os.path.getsize("data.csv") > 0:
         4: "Friday", 5: "Saturday", 6: "Sunday"
     }
     df.rename(columns=lambda x: day_map.get(x, day_map.get(str(x), x)), inplace=True)
-        
-if os.path.exists(r"Lab02/data.json") and os.path.getsize(r"Lab02/data.json") > 0:
-    with open(r"Lab02/data.json", "r") as f:
-        json_data = json.load(f)
+
+# ---- CHANGED: data.json loading logic (path unchanged) ----
+try:
+    with open('Lab02/data.json', 'r') as file:
+        json_data = json.load(file)
+    st.success("JSON data loaded successfully!")
+    st.write(f"JSON keys: {list(json_data.keys())}")
+    st.write(f"Has 'data_points'? {'data_points' in json_data}")
+except Exception as e:
+    st.error(f"Error loading JSON: {str(e)}")
+# -----------------------------------------------------------
 
 st.divider()
 st.header("Raw Data")
