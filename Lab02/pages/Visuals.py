@@ -66,33 +66,28 @@ if not df.empty:
 else:
     st.info("No data available for visualization.")
 
-# Graph 2
+# Graph 2 (super simple)
 st.divider()
 st.subheader("Graph 2: TikTok Hours vs Productivity (Dynamic)")
-if json_data and json_data.get("productivity_data") and not df.empty:
-    hours_categories = list(json_data["productivity_data"].keys())
-    productivity_scores = list(json_data["productivity_data"].values())
 
-    productivity_df = pd.DataFrame({
-        'Hours Range': hours_categories,
-        'Productivity Score': productivity_scores
-    })
+if json_data and "productivity_data" in json_data and not df.empty:
+    prod = json_data["productivity_data"]
 
-    st.line_chart(productivity_df, x='Hours Range', y='Productivity Score')
+    st.line_chart(pd.DataFrame({
+        "Hours Range": list(prod.keys()),
+        "Productivity Score": list(prod.values())
+    }), x="Hours Range", y="Productivity Score")
 
-    melted = df.melt(value_vars=df.columns)
-    if not melted.empty:
-        user_avg = melted["value"].mean()
-        bins = [0, 1, 2, 3, 4, 5, 6, float('inf')]
-        labels = ["0-1","1-2","2-3","3-4","4-5","5-6","6+"]
-        category = pd.cut([user_avg], bins=bins, labels=labels)[0]
-        user_score = json_data["productivity_data"].get(str(category), "N/A")
-        st.info(f"Based on your average of {user_avg:.2f} hours/day, your estimated productivity score is {user_score}/100.")
-    else:
-        st.info("No usage data available to calculate your average productivity score.")
-    st.write("**Description:** Compare average daily TikTok usage with productivity scores.")
+    avg = df.select_dtypes(float).melt()["value"].mean()
+    bins = [0,1,2,3,4,5,6,float("inf")]
+    labels = ["0-1","1-2","2-3","3-4","4-5","5-6","6+"]
+    cat = pd.cut([avg], bins=bins, labels=labels)[0]
+    score = prod.get(str(cat), "N/A")
+
+    st.info(f"Based on your average of {avg:.2f} hours/day, your estimated productivity score is {score}/100.")
 else:
     st.info("No productivity data available for visualization.")
+
 
 # Graph 3
 st.divider()
